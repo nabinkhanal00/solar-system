@@ -1,0 +1,15 @@
+#+TITLE: Solar System
+This project is a simple simulation of solar system.
+It only contains Sun, Venus and Earth
+
+** Requirements
+ 	- GLFW
+
+** Build Instructions
+
+#+BEGIN_SRC bash
+	mkdir build
+	make
+	make run
+#+END_SRC
+
