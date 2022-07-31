@@ -3,12 +3,12 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 
-#include "../include/ResourceManager.hpp"
-#include "../include/VertexBuffer.hpp"
-#include "../include/VertexArray.hpp"
-#include "../include/IndexBuffer.hpp"
-#include "../include/Shader.hpp"
-#include "../include/Renderer.hpp"
+#include "ResourceManager.hpp"
+#include "VertexBuffer.hpp"
+#include "VertexArray.hpp"
+#include "IndexBuffer.hpp"
+#include "Shader.hpp"
+#include "Renderer.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -17,8 +17,45 @@
 const unsigned int WIDTH = 1320;
 const unsigned int HEIGHT = 760;
 
-void glfwFramebufferSizeCallback(GLFWwindow* window, int width, int height){
-	glViewport(0,0,width,height);
+glm::vec3 at(0.0f, 0.0f, 2.0f);
+glm::vec3 to(0.0f, 0.0f, 0.0f);
+glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+const float cameraSpeed = 0.01;
+void glfwFramebufferSizeCallback(GLFWwindow *window, int width, int height) {
+	glViewport(0, 0, width, height);
+}
+
+static void cursorPositionCallback(GLFWwindow *window, double xpos,
+                                   double ypos) {
+	float x = xpos / WIDTH - 0.5;
+	float y = -ypos / HEIGHT + 0.5;
+	to += glm::vec3(x, y, 0);
+	glfwSetCursorPos(window, WIDTH / 2.0f, HEIGHT / 2.0f);
+}
+static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset) {
+	at += glm::vec3(0, 0, -cameraSpeed * yoffset);
+	to += glm::vec3(0, 0, -cameraSpeed * 5 * yoffset);
+}
+
+void handleInput(GLFWwindow *window) {
+	if (glfwGetKey(window, GLFW_KEY_W)) {
+		at += glm::vec3(0.0f, cameraSpeed, 0.0f);
+		to += glm::vec3(0.0f, cameraSpeed, 0.0f);
+
+	} else if (glfwGetKey(window, GLFW_KEY_S)) {
+
+		at -= glm::vec3(0.0f, cameraSpeed, 0.0f);
+		to -= glm::vec3(0.0f, cameraSpeed, 0.0f);
+	} else if (glfwGetKey(window, GLFW_KEY_A)) {
+
+		at -= glm::vec3(cameraSpeed, 0.0f, 0.0f);
+		to -= glm::vec3(cameraSpeed, 0.0f, 0.0f);
+	} else if (glfwGetKey(window, GLFW_KEY_D)) {
+
+		at += glm::vec3(cameraSpeed, 0.0f, 0.0f);
+		to += glm::vec3(cameraSpeed, 0.0f, 0.0f);
+	}
 }
 
 GLFWwindow *InitWindow() {
@@ -52,7 +89,6 @@ GLFWwindow *InitWindow() {
 	}
 	glfwMakeContextCurrent(window);
 
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 	// Initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Unable to laod GLAD" << std::endl;
@@ -62,9 +98,10 @@ GLFWwindow *InitWindow() {
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
 	glfwSetFramebufferSizeCallback(window, glfwFramebufferSizeCallback);
-
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	glfwSetCursorPosCallback(window, cursorPositionCallback);
+	glfwSetScrollCallback(window, scrollCallback);
 	return window;
 }
 
@@ -189,7 +226,7 @@ int main(void) {
 	float current_time, prev_time = glfwGetTime();
 	float delta_sum = 0;
 	while (glfwWindowShouldClose(window) == false) {
-
+		handleInput(window);
 		current_time = glfwGetTime();
 		delta_time = current_time - prev_time;
 		prev_time = current_time;
@@ -205,9 +242,7 @@ int main(void) {
 		glm::mat4 view(1.0f);
 		glm::mat4 projection(1.0f);
 
-		view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f),
-		                   glm::vec3(0.0f, 0.0f, 0.0f),
-		                   glm::vec3(0.0f, 1.0f, 0.0f));
+		view = glm::lookAt(at, to, up);
 		projection = glm::perspective(glm::radians(45.0f),
 		                              WIDTH / (float)HEIGHT, 0.1f, 100.0f);
 
